@@ -7,5 +7,5 @@ import com.KayraAtalay.model.Address;
 
 @Repository
 public interface AddressRepository extends JpaRepository<Address, Long> {
-
+	
 }

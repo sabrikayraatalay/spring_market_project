@@ -16,7 +16,7 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class JwtService {
 	
-	public static final String SECRET_KEY = "hMtE8mXSZjCUzs4hafFg7WnFK8M0Q8UjlgU6DUzGn0U=";
+	public static final String SECRET_KEY = "/gL7+WzWy/GRbIKlBw7zKqgMRFxu04dBpA1T+A9vj6U=";
 	
 	
 	@SuppressWarnings("deprecation")

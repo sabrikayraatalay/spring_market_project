@@ -1,16 +1,5 @@
 package com.KayraAtalay.service.impl;
 
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
-
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import com.KayraAtalay.dto.AuthRequest;
 import com.KayraAtalay.dto.AuthResponse;
 import com.KayraAtalay.dto.DtoCustomerIU;
@@ -30,157 +19,152 @@ import com.KayraAtalay.repository.RefreshTokenRepository;
 import com.KayraAtalay.repository.UserRepository;
 import com.KayraAtalay.service.IAuthenticationService;
 import com.KayraAtalay.utils.DtoConverter;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class AuthenticationServiceImpl implements IAuthenticationService {
 
-	@Autowired
-	private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-	@Autowired
-	private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
-	@Autowired
-	private CustomerRepository customerRepository;
+    @Autowired
+    private CustomerRepository customerRepository;
 
-	// Below injections are for authentication
+    @Autowired
+    private AuthenticationProvider authenticationProvider;
 
-	@Autowired
-	private AuthenticationProvider authenticationProvider;
+    @Autowired
+    private JwtService jwtService;
 
-	@Autowired
-	private JwtService jwtService;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
 
-	@Autowired
-	private RefreshTokenRepository refreshTokenRepository;
+    private Customer createCustomer(RegisterRequest request) {
+        DtoCustomerIU requestCustomerIU = request.getCustomer();
+        Customer customer = new Customer();
+        customer.setCreateTime(new Date());
+        BeanUtils.copyProperties(requestCustomerIU, customer);
+        return customer;
+    }
 
-	private Customer createCustomer(RegisterRequest request) {
+    private User createUser(RegisterRequest request) {
+        User user = new User();
+        user.setCreateTime(new Date());
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(UserRole.CUSTOMER);
+        return user;
+    }
 
-		DtoCustomerIU requestCustomerIU = request.getCustomer();
-		Customer customer = new Customer();
-		customer.setCreateTime(new Date());
-		BeanUtils.copyProperties(requestCustomerIU, customer);
+    private RegisterResponse createRegisterResponse(User user, Customer customer) {
+        RegisterResponse registerResponse = new RegisterResponse();
+        registerResponse.setUser(DtoConverter.toDto(user));
+        registerResponse.setCustomer(DtoConverter.toDto(customer));
+        return registerResponse;
+    }
 
-		return customer;
+    private RefreshToken createRefreshToken(User user) {
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setCreateTime(new Date());
+        refreshToken.setExpireDate(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 4));
+        refreshToken.setRefreshToken(UUID.randomUUID().toString());
+        refreshToken.setUser(user);
+        return refreshToken;
+    }
 
-	}
+    private boolean isCustomerValid(Customer customer) {
+        Optional<Customer> optMail = customerRepository.findByEmail(customer.getEmail());
+        if (optMail.isPresent()) {
+            return false;
+        }
 
-	private User createUser(RegisterRequest request) {
+        Optional<Customer> optPhoneNumber = customerRepository.findByPhoneNumber(customer.getPhoneNumber());
+        if (optPhoneNumber.isPresent()) {
+            return false;
+        }
 
-		User user = new User();
-		user.setCreateTime(new Date());
-		user.setUsername(request.getUsername());
-		user.setPassword(passwordEncoder.encode(request.getPassword()));
-		user.setRole(UserRole.CUSTOMER);
+        return true;
+    }
 
-		return user;
-	}
+    @Override
+    public RegisterResponse register(RegisterRequest request) {
+        Optional<User> optional = userRepository.findByUsername(request.getUsername());
 
-	private RegisterResponse createRegisterResponse(User user, Customer customer) {
-		RegisterResponse registerResponse = new RegisterResponse();
+        if (optional.isPresent()) {
+            throw new BaseException(new ErrorMessage(MessageType.USERNAME_ALREADY_EXISTS, request.getUsername()));
+        }
 
-		registerResponse.setUser(DtoConverter.toDto(user));
-		registerResponse.setCustomer(DtoConverter.toDto(customer));
+        Customer customer = createCustomer(request);
 
-		return registerResponse;
-	}
+        if (isCustomerValid(customer) == false) {
+            throw new BaseException(new ErrorMessage(MessageType.CUSTOMER_ALREADY_EXISTS, null));
+        }
 
-	private RefreshToken createRefreshToken(User user) {
-		RefreshToken refreshToken = new RefreshToken();
-		refreshToken.setCreateTime(new Date());
-		refreshToken.setExpireDate(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 4));
-		refreshToken.setRefreshToken(UUID.randomUUID().toString());
-		refreshToken.setUser(user);
+        Customer savedCustomer = customerRepository.save(customer);
+        User user = createUser(request);
+        user.setCustomer(savedCustomer);
+        savedCustomer.setUser(user);
 
-		return refreshToken;
-	}
+        User savedUser = userRepository.save(user);
 
-	private boolean isCustomerValid(Customer customer) {
+        return createRegisterResponse(savedUser, savedCustomer);
+    }
 
-		Optional<Customer> optMail = customerRepository.findByEmail(customer.getEmail());
-		if (optMail.isPresent()) {
-			return false;
-		}
+    @Override
+    public AuthResponse authenticate(AuthRequest request) {
+        try {
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
+                    request.getUsername(), request.getPassword());
 
-		Optional<Customer> optPhoneNumber = customerRepository.findByPhoneNumber(customer.getPhoneNumber());
-		if (optPhoneNumber.isPresent()) {
-			return false;
-		}
+            authenticationProvider.authenticate(authenticationToken);
 
-		return true;
+            User user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new BaseException(new ErrorMessage(MessageType.GENERAL_EXCEPTION, "User not found.")));
+                    
+            String accessToken = jwtService.generateToken(user); // **DÜZELTME: Customer yerine User nesnesi gönderildi**
+            RefreshToken savedRefreshToken = refreshTokenRepository.save(createRefreshToken(user));
 
-	}
+            return new AuthResponse(accessToken, savedRefreshToken.getRefreshToken());
+        } catch (Exception e) {
+            throw new BaseException(new ErrorMessage(MessageType.USERNAME_OR_PASSWORD_INVALID, e.getMessage()));
+        }
+    }
 
-	@Override
-	public RegisterResponse register(RegisterRequest request) {
+    public boolean isValidRefreshToken(RefreshToken refreshToken) {
+        return new Date().before(refreshToken.getExpireDate());
+    }
 
-		Optional<User> optional = userRepository.findByUsername(request.getUsername());
+    @Override
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        Optional<RefreshToken> optional = refreshTokenRepository.findByRefreshToken(request.getRefreshToken());
 
-		if (optional.isPresent()) {
-			throw new BaseException(new ErrorMessage(MessageType.USERNAME_ALREADY_EXISTS, request.getUsername()));
-		}
+        if (optional.isEmpty()) {
+            throw new BaseException(new ErrorMessage(MessageType.REFRESH_TOKEN_NOT_FOUND, request.getRefreshToken()));
+        }
 
-		Customer customer = createCustomer(request);
+        if (!isValidRefreshToken(optional.get())) {
+            throw new BaseException(new ErrorMessage(MessageType.REFRESH_TOKEN_EXPIRED, request.getRefreshToken()));
+        }
 
-		if (isCustomerValid(customer) == false) {
-			throw new BaseException(new ErrorMessage(MessageType.CUSTOMER_ALREADY_EXISTS, null));
-		}
+        User user = optional.get().getUser();
+        
+        // Bu kısımda zaten User nesnesi elimizde var, tekrar Customer'dan çekmeye gerek yok
+        
+        String accessToken = jwtService.generateToken(user); // **DÜZELTME: Customer yerine User nesnesi gönderildi**
+        RefreshToken savedRefreshToken = refreshTokenRepository.save(createRefreshToken(user));
 
-		Customer savedCustomer = customerRepository.save(customer);
-
-		User user = createUser(request);
-
-		user.setCustomer(savedCustomer);
-		savedCustomer.setUser(user);
-
-		User savedUser = userRepository.save(user);
-
-		return createRegisterResponse(savedUser, savedCustomer);
-	}
-
-	@Override
-	public AuthResponse authenticate(AuthRequest request) {
-		try {
-			UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-					request.getUsername(), request.getPassword());
-
-			authenticationProvider.authenticate(authenticationToken);
-
-			Optional<User> optUser = userRepository.findByUsername(request.getUsername());
-
-			String accessToken = jwtService.generateToken(optUser.get());
-			RefreshToken savedRefreshToken = refreshTokenRepository.save(createRefreshToken(optUser.get()));
-
-			return new AuthResponse(accessToken, savedRefreshToken.getRefreshToken());
-
-		} catch (Exception e) {
-			throw new BaseException(new ErrorMessage(MessageType.USERNAME_OR_PASSWORD_INVALID, e.getMessage()));
-		}
-
-	}
-
-	public boolean isValidRefreshToken(RefreshToken refreshToken) {
-		return new Date().before(refreshToken.getExpireDate());
-	}
-
-	@Override
-	public AuthResponse refreshToken(RefreshTokenRequest request) {
-
-		Optional<RefreshToken> optional = refreshTokenRepository.findByRefreshToken(request.getRefreshToken());
-
-		if (optional.isEmpty()) {
-			throw new BaseException(new ErrorMessage(MessageType.REFRESH_TOKEN_NOT_FOUND, request.getRefreshToken()));
-		}
-
-		if (!isValidRefreshToken(optional.get())) {
-			throw new BaseException(new ErrorMessage(MessageType.REFRESH_TOKEN_EXPIRED, request.getRefreshToken()));
-		}
-
-		User user = optional.get().getUser();
-		String accessToken = jwtService.generateToken(user);
-		RefreshToken savedRefreshToken = refreshTokenRepository.save(createRefreshToken(user));
-
-		return new AuthResponse(accessToken, savedRefreshToken.getRefreshToken());
-	}
-
+        return new AuthResponse(accessToken, savedRefreshToken.getRefreshToken());
+    }
 }
