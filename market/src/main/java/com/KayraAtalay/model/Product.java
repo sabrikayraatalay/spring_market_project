@@ -2,12 +2,10 @@ package com.KayraAtalay.model;
 
 import java.math.BigDecimal;
 
-import com.KayraAtalay.enums.ProductCategory;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,9 +29,9 @@ public class Product extends BaseEntity {
 	@Column(name = "stock")
 	private Integer stock;
 	
-	@Column(name = "category")
-	@Enumerated(EnumType.STRING)
-	private ProductCategory category;
+	@ManyToOne
+	@JoinColumn(name = "category_id")
+	private Category category;
 	
 
 }

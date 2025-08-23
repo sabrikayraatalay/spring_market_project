@@ -2,8 +2,10 @@ package com.KayraAtalay.utils;
 
 import org.springframework.beans.BeanUtils;
 
+import com.KayraAtalay.dto.DtoAddress;
 import com.KayraAtalay.dto.DtoCustomer;
 import com.KayraAtalay.dto.DtoUser;
+import com.KayraAtalay.model.Address;
 import com.KayraAtalay.model.Customer;
 import com.KayraAtalay.model.User;
 
@@ -25,6 +27,12 @@ public class DtoConverter {
 
 		return dtoUser;
 
+	}
+	
+	public static DtoAddress toDto(Address address) {
+		DtoAddress dtoAddress = new DtoAddress();
+		BeanUtils.copyProperties(address, dtoAddress);
+		return dtoAddress;
 	}
 
 }
