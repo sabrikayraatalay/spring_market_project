@@ -5,10 +5,12 @@ import org.springframework.beans.BeanUtils;
 import com.KayraAtalay.dto.DtoAddress;
 import com.KayraAtalay.dto.DtoCategory;
 import com.KayraAtalay.dto.DtoCustomer;
+import com.KayraAtalay.dto.DtoProduct;
 import com.KayraAtalay.dto.DtoUser;
 import com.KayraAtalay.model.Address;
 import com.KayraAtalay.model.Category;
 import com.KayraAtalay.model.Customer;
+import com.KayraAtalay.model.Product;
 import com.KayraAtalay.model.User;
 
 public class DtoConverter {
@@ -43,6 +45,16 @@ public class DtoConverter {
 		BeanUtils.copyProperties(category, dtoCategory);
 
 		return dtoCategory;
+	}
+	
+	public static DtoProduct toDto(Product product) {
+		DtoProduct dtoProduct = new DtoProduct();
+		
+		BeanUtils.copyProperties(product, dtoProduct);
+		
+		dtoProduct.setCategory(toDto(product.getCategory()));
+		
+		return dtoProduct;
 	}
 
 }

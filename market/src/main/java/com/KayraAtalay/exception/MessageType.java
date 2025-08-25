@@ -19,7 +19,9 @@ public enum MessageType {
 	UNAUTHORIZED_ACCESS("1014", "Unauthorized access"),
 	CUSTOMER_NOT_FOUND("1015", "Customer information for the logged-in user was not found"),
 	CATEGORY_ALREADY_EXISTS("1016", "This category already exists"),
-	CATEGORY_NOT_FOUND("1017", "Could not find the category");
+	CATEGORY_NOT_FOUND("1017", "Could not find the category"),
+	PRODUCT_ALREADY_EXISTS("1018", "This product already exists"),
+	PRODUCT_NOT_FOUND("1019", "Could not find the product");
 	 
 	 
 	private String code;
