@@ -1,13 +1,21 @@
 package com.KayraAtalay.utils;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.BeanUtils;
 
 import com.KayraAtalay.dto.DtoAddress;
+import com.KayraAtalay.dto.DtoCart;
+import com.KayraAtalay.dto.DtoCartItem;
 import com.KayraAtalay.dto.DtoCategory;
 import com.KayraAtalay.dto.DtoCustomer;
 import com.KayraAtalay.dto.DtoProduct;
 import com.KayraAtalay.dto.DtoUser;
 import com.KayraAtalay.model.Address;
+import com.KayraAtalay.model.Cart;
+import com.KayraAtalay.model.CartItem;
 import com.KayraAtalay.model.Category;
 import com.KayraAtalay.model.Customer;
 import com.KayraAtalay.model.Product;
@@ -55,6 +63,40 @@ public class DtoConverter {
 		dtoProduct.setCategory(toDto(product.getCategory()));
 		
 		return dtoProduct;
+	}
+	
+	
+	
+	public static DtoCartItem toDto(CartItem cartItem) {
+		DtoCartItem dtoCartItem = new DtoCartItem();
+		Product cartItemProduct = cartItem.getProduct();
+		BigDecimal quantityBigDecimal = new BigDecimal(cartItem.getQuantity());
+		
+		dtoCartItem.setCreateTime(cartItem.getCreateTime());
+		dtoCartItem.setPrice(cartItemProduct.getPrice());
+		dtoCartItem.setProductId(cartItemProduct.getId());
+		dtoCartItem.setProductName(cartItemProduct.getName());
+		dtoCartItem.setQuantity(cartItem.getQuantity());
+		dtoCartItem.setSubtotal(cartItemProduct.getPrice().multiply(quantityBigDecimal));
+		
+		return dtoCartItem;
+		
+	}
+	
+	
+	
+	public static DtoCart toDto(Cart cart) {
+		DtoCart dtoCart = new DtoCart();
+		List<DtoCartItem> items = cart.getItems().stream().map(DtoConverter::toDto).collect(Collectors.toList());
+		
+		dtoCart.setCustomerId(cart.getCustomer().getId());
+		dtoCart.setCartId(cart.getId());
+		dtoCart.setTotalPrice(cart.getTotalPrice());
+		dtoCart.setItems(items);
+		dtoCart.setCreateTime(cart.getCreateTime());
+		
+		return dtoCart;
+		
 	}
 
 }
