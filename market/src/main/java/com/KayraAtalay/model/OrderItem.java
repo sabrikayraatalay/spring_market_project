@@ -31,5 +31,5 @@ public class OrderItem extends BaseEntity {
     @Column(name = "price_at_purchase")
     private BigDecimal priceAtPurchase;
 
-    // Getter ve Setter metotları Lombok tarafından otomatik oluşturulur.
+    
 }

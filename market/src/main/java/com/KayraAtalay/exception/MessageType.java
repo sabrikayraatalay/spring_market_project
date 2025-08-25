@@ -17,7 +17,9 @@ public enum MessageType {
 	ADDRESS_NOT_FOUND("1012", "Could not find the address"),
 	CUSTOMER_ALREADY_EXISTS("1013", "This customer already exists"), 
 	UNAUTHORIZED_ACCESS("1014", "Unauthorized access"),
-	CUSTOMER_NOT_FOUND("1015", "Customer information for the logged-in user was not found");
+	CUSTOMER_NOT_FOUND("1015", "Customer information for the logged-in user was not found"),
+	CATEGORY_ALREADY_EXISTS("1016", "This category already exists"),
+	CATEGORY_NOT_FOUND("1017", "Could not find the category");
 	 
 	 
 	private String code;

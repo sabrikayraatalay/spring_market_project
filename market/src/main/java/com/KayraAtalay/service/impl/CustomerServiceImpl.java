@@ -1,6 +1,5 @@
 package com.KayraAtalay.service.impl;
 
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -63,7 +62,6 @@ public class CustomerServiceImpl implements ICustomerService {
 	public DtoAddress addAddressToCustomerAccount(Long id, DtoAddressIU addressRequest) {
 		Customer customer = findCustomerFromDatabase(id);
 		Address address = new Address();
-		address.setCreateTime(new Date());
 		BeanUtils.copyProperties(addressRequest, address);
 
 		for (Address findAddress : customer.getAddresses()) {

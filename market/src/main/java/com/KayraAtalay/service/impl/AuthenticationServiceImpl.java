@@ -54,14 +54,12 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     private Customer createCustomer(RegisterRequest request) {
         DtoCustomerIU requestCustomerIU = request.getCustomer();
         Customer customer = new Customer();
-        customer.setCreateTime(new Date());
         BeanUtils.copyProperties(requestCustomerIU, customer);
         return customer;
     }
 
     private User createUser(RegisterRequest request) {
         User user = new User();
-        user.setCreateTime(new Date());
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(UserRole.CUSTOMER);
@@ -77,7 +75,6 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
     private RefreshToken createRefreshToken(User user) {
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setCreateTime(new Date());
         refreshToken.setExpireDate(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 4));
         refreshToken.setRefreshToken(UUID.randomUUID().toString());
         refreshToken.setUser(user);
