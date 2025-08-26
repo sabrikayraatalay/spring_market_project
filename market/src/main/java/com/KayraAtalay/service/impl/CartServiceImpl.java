@@ -21,6 +21,8 @@ import com.KayraAtalay.repository.ProductRepository;
 import com.KayraAtalay.service.ICartService;
 import com.KayraAtalay.utils.DtoConverter;
 
+import jakarta.transaction.Transactional;
+
 @Service
 public class CartServiceImpl implements ICartService {
 
@@ -60,6 +62,7 @@ public class CartServiceImpl implements ICartService {
 	}
 
 	@Override
+	@Transactional
 	public DtoCart addProductToCart(Long customerId, CartRequest cartRequest) {
 
 		Long productId = cartRequest.getProductId();
@@ -106,6 +109,7 @@ public class CartServiceImpl implements ICartService {
 	}
 
 	@Override
+	@Transactional
 	public DtoCart removeProductFromCart(Long customerId, CartRequest cartRequest) {
 
 		Long productId = cartRequest.getProductId();
@@ -157,6 +161,7 @@ public class CartServiceImpl implements ICartService {
 	}
 
 	@Override
+	@Transactional
 	public void clearCart(Long customerId) {
 
 		Customer customer = customerRepository.findById(customerId).orElseThrow(

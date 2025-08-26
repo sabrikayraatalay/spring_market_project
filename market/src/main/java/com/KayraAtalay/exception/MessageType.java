@@ -23,7 +23,8 @@ public enum MessageType {
 	PRODUCT_ALREADY_EXISTS("1018", "This product already exists"),
 	PRODUCT_NOT_FOUND("1019", "Could not find the product"),
 	CART_NOT_FOUND("1020", "Could not find the Cart"),
-	OUT_OF_STOCK("1021", "Your request is more than this product's stock");
+	OUT_OF_STOCK("1021", "Your request is more than this product's stock"),
+	ORDER_NOT_FOUND("1022", "Could not find the Order");
 	 
 	 
 	private String code;
