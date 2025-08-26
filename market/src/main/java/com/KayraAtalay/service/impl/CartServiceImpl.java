@@ -5,6 +5,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.KayraAtalay.dto.CartRequest;
 import com.KayraAtalay.dto.DtoCart;
 import com.KayraAtalay.exception.BaseException;
 import com.KayraAtalay.exception.ErrorMessage;
@@ -13,6 +14,7 @@ import com.KayraAtalay.model.Cart;
 import com.KayraAtalay.model.CartItem;
 import com.KayraAtalay.model.Customer;
 import com.KayraAtalay.model.Product;
+import com.KayraAtalay.repository.CartItemRepository;
 import com.KayraAtalay.repository.CartRepository;
 import com.KayraAtalay.repository.CustomerRepository;
 import com.KayraAtalay.repository.ProductRepository;
@@ -29,6 +31,9 @@ public class CartServiceImpl implements ICartService {
 	private CustomerRepository customerRepository;
 
 	@Autowired
+	private CartItemRepository cartItemRepository;
+
+	@Autowired
 	private ProductRepository productRepository;
 
 	private CartItem createCartItem(Cart cart, Product product, int quantity) {
@@ -43,40 +48,23 @@ public class CartServiceImpl implements ICartService {
 		Cart cart = new Cart();
 		cart.setCustomer(customer);
 
-		return cart;
+		return cartRepository.save(cart);
 	}
 
 	private Cart customerCartCheckOrCreate(Long customerId) {
 		Customer customer = customerRepository.findById(customerId).orElseThrow(
 				() -> new BaseException(new ErrorMessage(MessageType.CUSTOMER_NOT_FOUND, customerId.toString())));
 
-		Optional<Cart> optCart = cartRepository.findByCustomer(customer);
-		Cart cart = new Cart();
+		return cartRepository.findByCustomer(customer).orElseGet(() -> createCart(customer));
 
-		if (optCart.isEmpty()) {
-			cart = createCart(customer);
-			return cart;
-		}
-
-		return optCart.get();
-
-	}
-
-	private Optional<CartItem> findCartItemInCart(Cart cart, Product product) {
-		if (cart.getItems() == null) {
-			return Optional.empty();
-		}
-
-		for (CartItem item : cart.getItems()) {
-			if (item.getProduct().getId().equals(product.getId())) {
-				return Optional.of(item);
-			}
-		}
-		return Optional.empty();
 	}
 
 	@Override
-	public DtoCart addProductToCart(Long customerId, Long productId, int quantity) {
+	public DtoCart addProductToCart(Long customerId, CartRequest cartRequest) {
+
+		Long productId = cartRequest.getProductId();
+		Integer quantity = cartRequest.getQuantity();
+
 		if (quantity < 1) {
 			throw new BaseException(new ErrorMessage(MessageType.GENERAL_EXCEPTION,
 					"Please enter a valid amount to add this product to cart"));
@@ -87,16 +75,27 @@ public class CartServiceImpl implements ICartService {
 
 		Cart cart = customerCartCheckOrCreate(customerId);
 
-		Optional<CartItem> optCartItem = findCartItemInCart(cart, product);
+		Optional<CartItem> optCartItem = cartItemRepository.findByCartAndProduct(cart, product);
+
+		int newTotalQuantity;
+		
+		if (optCartItem.isPresent()) {
+			newTotalQuantity = optCartItem.get().getQuantity() + quantity;
+		} else {
+			newTotalQuantity = quantity;
+		}
+
+		if (newTotalQuantity > product.getStock()) {
+			throw new BaseException(new ErrorMessage(MessageType.OUT_OF_STOCK, product.getStock().toString()));
+		}
 
 		if (optCartItem.isPresent()) {
 			CartItem existingCartItem = optCartItem.get();
-			if (quantity + existingCartItem.getQuantity() > product.getStock()) {
-				throw new BaseException(new ErrorMessage(MessageType.OUT_OF_STOCK, product.getStock().toString()));
-			}
+
 			existingCartItem.setQuantity(existingCartItem.getQuantity() + quantity);
 		} else {
 			CartItem newCartItem = createCartItem(cart, product, quantity);
+
 			cart.getItems().add(newCartItem);
 		}
 
@@ -107,17 +106,26 @@ public class CartServiceImpl implements ICartService {
 	}
 
 	@Override
-	public DtoCart removeProductFromCart(Long customerId, Long productId, int quantity) {
+	public DtoCart removeProductFromCart(Long customerId, CartRequest cartRequest) {
+
+		Long productId = cartRequest.getProductId();
+		Integer quantity = cartRequest.getQuantity();
+
 		if (quantity < 1) {
 			throw new BaseException(new ErrorMessage(MessageType.GENERAL_EXCEPTION,
 					"Please enter a valid amount to remove this product from cart"));
 		}
 
-		Cart cart = customerCartCheckOrCreate(customerId);
+		Customer customer = customerRepository.findById(customerId).orElseThrow(
+				() -> new BaseException(new ErrorMessage(MessageType.CUSTOMER_NOT_FOUND, customerId.toString())));
+
+		Cart cart = Optional.ofNullable(customer.getCart()).orElseThrow(
+				() -> new BaseException(new ErrorMessage(MessageType.CART_NOT_FOUND, customerId.toString())));
+
 		Product product = productRepository.findById(productId).orElseThrow(
 				() -> new BaseException(new ErrorMessage(MessageType.PRODUCT_NOT_FOUND, productId.toString())));
 
-		Optional<CartItem> optCartItem = findCartItemInCart(cart, product);
+		Optional<CartItem> optCartItem = cartItemRepository.findByCartAndProduct(cart, product);
 
 		if (optCartItem.isEmpty()) {
 			throw new BaseException(new ErrorMessage(MessageType.GENERAL_EXCEPTION,

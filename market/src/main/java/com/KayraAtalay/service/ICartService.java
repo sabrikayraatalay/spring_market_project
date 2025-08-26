@@ -1,12 +1,13 @@
 package com.KayraAtalay.service;
 
+import com.KayraAtalay.dto.CartRequest;
 import com.KayraAtalay.dto.DtoCart;
 
 public interface ICartService {
 
-	public DtoCart addProductToCart(Long customerId, Long productId, int quantity);
+	public DtoCart addProductToCart(Long customerId, CartRequest cartRequest);
 
-	public DtoCart removeProductFromCart(Long customerId, Long productId, int quantity);
+	public DtoCart removeProductFromCart(Long customerId, CartRequest cartRequest);
 
 	public DtoCart getCart(Long customerId);
 

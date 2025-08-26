@@ -72,6 +72,7 @@ public class DtoConverter {
 		Product cartItemProduct = cartItem.getProduct();
 		BigDecimal quantityBigDecimal = new BigDecimal(cartItem.getQuantity());
 		
+		dtoCartItem.setId(cartItem.getId());
 		dtoCartItem.setCreateTime(cartItem.getCreateTime());
 		dtoCartItem.setPrice(cartItemProduct.getPrice());
 		dtoCartItem.setProductId(cartItemProduct.getId());
@@ -89,6 +90,7 @@ public class DtoConverter {
 		DtoCart dtoCart = new DtoCart();
 		List<DtoCartItem> items = cart.getItems().stream().map(DtoConverter::toDto).collect(Collectors.toList());
 		
+		dtoCart.setId(cart.getId());
 		dtoCart.setCustomerId(cart.getCustomer().getId());
 		dtoCart.setCartId(cart.getId());
 		dtoCart.setTotalPrice(cart.getTotalPrice());

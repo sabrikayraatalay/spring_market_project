@@ -1,6 +1,7 @@
 package com.KayraAtalay.model;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -25,7 +26,7 @@ public class Cart extends BaseEntity {
     private Customer customer; 
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> items;
+    private List<CartItem> items = new ArrayList<>();
 
     
     public BigDecimal getTotalPrice() {
