@@ -21,7 +21,9 @@ public enum MessageType {
 	CATEGORY_ALREADY_EXISTS("1016", "This category already exists"),
 	CATEGORY_NOT_FOUND("1017", "Could not find the category"),
 	PRODUCT_ALREADY_EXISTS("1018", "This product already exists"),
-	PRODUCT_NOT_FOUND("1019", "Could not find the product");
+	PRODUCT_NOT_FOUND("1019", "Could not find the product"),
+	CART_NOT_FOUND("1020", "Could not find the Cart"),
+	OUT_OF_STOCK("1021", "Your request is more than this product's stock");
 	 
 	 
 	private String code;
