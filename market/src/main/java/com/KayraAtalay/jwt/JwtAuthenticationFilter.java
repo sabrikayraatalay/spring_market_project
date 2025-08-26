@@ -64,10 +64,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter  {
 			
 		}
 		catch (ExpiredJwtException e) {
-			throw new BaseException(new ErrorMessage(MessageType.TOKEN_EXPIRED, "" + e.getMessage()));
+			throw new BaseException(new ErrorMessage(MessageType.TOKEN_EXPIRED,  e.getMessage()));
 		}
 		catch (Exception e) {
-			throw new BaseException(new ErrorMessage(MessageType.GENERAL_EXCEPTION, "" + e.getMessage()));			
+			throw new BaseException(new ErrorMessage(MessageType.GENERAL_EXCEPTION,  e.getMessage()));			
 		}
 		
 		filterChain.doFilter(request, response);
