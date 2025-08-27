@@ -3,7 +3,6 @@ package com.KayraAtalay.service.impl;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -136,14 +135,14 @@ public class OrderServiceImpl implements IOrderService {
 	}
 
 	@Override
-	public List<DtoOrder> getOrdersByCustomer(Long customerId) {
+	public Page<DtoOrder> getOrdersByCustomer(Long customerId, Pageable pageable) {
 
 		Customer customer = customerRepository.findById(customerId).orElseThrow(
 				() -> new BaseException(new ErrorMessage(MessageType.CUSTOMER_NOT_FOUND, customerId.toString())));
 
-		List<Order> orders = orderRepository.findByCustomer(customer);
+		Page<Order> orders = orderRepository.findAllByCustomer(customer, pageable);
 
-		return orders.stream().map(DtoConverter::toDto).collect(Collectors.toList());
+		return orders.map(DtoConverter::toDto);
 	}
 
 	@Override

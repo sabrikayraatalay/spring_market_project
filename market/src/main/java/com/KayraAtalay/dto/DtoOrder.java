@@ -15,15 +15,16 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DtoOrder extends DtoBase {
-	
+
 	private DtoCustomer customer;
-	
-	private BigDecimal totalAmount;
-	
+
 	private List<DtoOrderItem> items;
-	
+
 	private DtoAddress deliveryAddress;
 	
+	private BigDecimal totalAmount;
+
 	private OrderStatus status;
+
 
 }

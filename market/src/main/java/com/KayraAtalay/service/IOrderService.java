@@ -1,7 +1,5 @@
 package com.KayraAtalay.service;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -19,7 +17,7 @@ public interface IOrderService {
 	    
 	    public Page<DtoOrder> findAllPageableDto(Pageable pageable);
 
-	    public List<DtoOrder> getOrdersByCustomer(Long customerId);
+	    public Page<DtoOrder> getOrdersByCustomer(Long customerId, Pageable pageable);
 
 	    public DtoOrder cancelOrder(Long orderId);
 
